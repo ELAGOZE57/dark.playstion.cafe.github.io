@@ -70,10 +70,8 @@
     </div>
 
     <script>
-        // الرابط السحري الذي حصلت عليه من Apps Script
-        const API_URL = 'https://https://script.google.com/macros/s/AKfycbzelY0SySCslIaYOTZh6hqMkqkXbK0kEOGulRCiQUF2IWOI_WhiPIJoPHFHN95x8rPw/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycby9cEJiEbojeCFQCljlDx_jWtAvy5wWthvhkx6RlLP02YaZr3EtqMVtg7onyKpJEW1g/exec';
 
-        // --- الكود الذي سيجلب البيانات ويعرضها ---
         const roomsGrid = document.getElementById('rooms-grid');
         const loadingMessage = document.getElementById('loading');
 
@@ -82,7 +80,6 @@
                 const response = await fetch(API_URL);
                 const rooms = await response.json();
 
-                // إفراغ الشبكة وإخفاء رسالة التحميل
                 roomsGrid.innerHTML = '';
 
                 if (rooms.error) {
@@ -96,8 +93,8 @@
 
                 rooms.forEach(room => {
                     const card = document.createElement('div');
-                    // استخدام Status لتحديد اللون, مع التأكد من وجود القيمة
                     const statusClass = room.Status === 'Busy' ? 'Busy' : 'Available';
+                    
                     card.className = room-card ${statusClass};
                     
                     const name = document.createElement('h3');
@@ -118,7 +115,6 @@
             }
         }
 
-        // تشغيل الدالة عند تحميل الصفحة
         fetchAndDisplayRooms();
     </script>
 </body>
