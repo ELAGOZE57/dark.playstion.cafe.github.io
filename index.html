@@ -37,6 +37,10 @@
         }
         .room-card h3 {
             margin-top: 0;
+            font-size: 1.1em;
+        }
+        .room-card p {
+            margin-bottom: 0;
         }
         .room-card.Available {
             background-color: #004d40; /* أخضر غامق */
@@ -69,7 +73,53 @@
         // الرابط السحري الذي حصلت عليه من Apps Script
         const API_URL = 'https://script.google.com/macros/s/AKfycbyvIL5_Bk9er5o4kViWuN-NYYSFrHXyMVgGeqqKb3bnu9dEe37BGv2i8iYTXscri_KI/exec';
 
-        // ... باقي كود الجافاسكربت سيأتي لاحقًا ... 
+        // --- الكود الذي سيجلب البيانات ويعرضها ---
+        const roomsGrid = document.getElementById('rooms-grid');
+        const loadingMessage = document.getElementById('loading');
+
+        async function fetchAndDisplayRooms() {
+            try {
+                const response = await fetch(API_URL);
+                const rooms = await response.json();
+
+                // إفراغ الشبكة وإخفاء رسالة التحميل
+                roomsGrid.innerHTML = '';
+
+                if (rooms.error) {
+                    throw new Error(rooms.message);
+                }
+                
+                if (rooms.length === 0) {
+                    roomsGrid.innerHTML = '<p>لا توجد بيانات غرف حاليًا.</p>';
+                    return;
+                }
+
+                rooms.forEach(room => {
+                    const card = document.createElement('div');
+                    // استخدام Status لتحديد اللون, مع التأكد من وجود القيمة
+                    const statusClass = room.Status === 'Busy' ? 'Busy' : 'Available';
+                    card.className = room-card ${statusClass};
+                    
+                    const name = document.createElement('h3');
+                    name.textContent = room.RoomName || 'غرفة غير مسماة';
+                    
+                    const statusText = document.createElement('p');
+                    statusText.textContent = الحالة: ${statusClass === 'Available' ? 'متاحة' : 'مشغولة'};
+                    
+                    card.appendChild(name);
+                    card.appendChild(statusText);
+                    
+                    roomsGrid.appendChild(card);
+                });
+
+            } catch (error) {
+                roomsGrid.innerHTML = <p style="color: #f44336;">حدث خطأ في تحميل بيانات الغرف. الرجاء المحاولة لاحقاً.</p>;
+                console.error('Error fetching rooms:', error);
+            }
+        }
+
+        // تشغيل الدالة عند تحميل الصفحة
+        fetchAndDisplayRooms();
     </script>
 </body>
 </html>
