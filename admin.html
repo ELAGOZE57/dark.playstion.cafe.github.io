@@ -36,10 +36,8 @@
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycby9cEJiEbojeCFQCljlDx_jWtAvy5wWthvhkx6RlLP02YaZr3EtqMVtg7onyKpJEW1g/exec';
-
         const roomsGrid = document.getElementById('rooms-grid');
 
-        // دالة لجلب وعرض الغرف
         async function fetchAndDisplayRooms() {
             roomsGrid.innerHTML = '<p id="loading">جاري تحديث حالة الغرف...</p>';
             try {
@@ -74,7 +72,6 @@
                         endButton.onclick = () => endSession(room.RoomID);
                         actionsDiv.appendChild(endButton);
                     }
-                    
                     roomsGrid.appendChild(card);
                 });
 
@@ -83,25 +80,24 @@
             }
         }
 
-        // دالة لإرسال أمر "بدء الجلسة"
         async function startSession(roomId) {
             if (!confirm(`هل أنت متأكد أنك تريد بدء جلسة للغرفة ${roomId}؟`)) return;
             await sendAction('startSession', roomId);
         }
 
-        // دالة لإرسال أمر "إنهاء الجلسة"
         async function endSession(roomId) {
             if (!confirm(`هل أنت متأكد أنك تريد إنهاء جلسة الغرفة ${roomId}؟`)) return;
             await sendAction('endSession', roomId);
         }
         
-        // دالة عامة لإرسال الأوامر
         async function sendAction(actionName, roomId) {
              try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     redirect: 'follow',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
                     body: JSON.stringify({ action: actionName, roomId: roomId })
                 });
                 const result = await response.json();
@@ -117,7 +113,6 @@
         }
 
         fetchAndDisplayRooms();
-        // تحديث تلقائي كل دقيقة
         setInterval(fetchAndDisplayRooms, 60000); 
     </script>
 </body>
