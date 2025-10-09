@@ -35,7 +35,7 @@
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycby3b62wnm8yRJrNA54s0z4JTHOG7Gy4NG8iO4WDT0ErN4oVjDE2RrotHlKiJDVVayAJ/exec';
+        const API_URL = 'استبدل هذا النص بالرابط الجديد الذي نسخته للتو';
 
         const roomsGrid = document.getElementById('rooms-grid');
 
@@ -52,7 +52,7 @@
                     const card = document.createElement('div');
                     const statusClass = room.Status === 'Busy' ? 'Busy' : 'Available';
                     card.className = `room-card ${statusClass}`;
-                    
+
                     card.innerHTML = `
                         <h3>${room.RoomName || 'غرفة غير مسماة'}</h3>
                         <p>الحالة: ${statusClass === 'Available' ? 'متاحة' : 'مشغولة'}</p>
@@ -73,7 +73,7 @@
                         endButton.onclick = () => endSession(room.RoomID);
                         actionsDiv.appendChild(endButton);
                     }
-                    
+
                     roomsGrid.appendChild(card);
                 });
 
@@ -91,23 +91,19 @@
             if (!confirm(`هل أنت متأكد أنك تريد إنهاء جلسة الغرفة ${roomId}؟`)) return;
             await sendAction('endSession', roomId);
         }
-        
-        // دالة عامة مُحسَّنة لإرسال الأوامر وعرض أخطاء أفضل
+
         async function sendAction(actionName, roomId) {
              try {
                 const urlWithParams = `${API_URL}?action=${actionName}&roomId=${roomId}`;
                 const response = await fetch(urlWithParams);
                 const result = await response.json();
-
                 if (result.status === 'success') {
                     alert(result.message);
                     fetchAndDisplayRooms();
                 } else {
-                    // إذا كان هناك رسالة خطأ من السيرفر، اعرضها
                     throw new Error(result.message || JSON.stringify(result));
                 }
             } catch (error) {
-                // اعرض الخطأ الكامل الذي يحدث في المتصفح
                 alert(`فشل الإجراء: ${error.toString()}`);
             }
         }
