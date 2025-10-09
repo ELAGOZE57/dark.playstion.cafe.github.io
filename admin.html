@@ -36,12 +36,13 @@
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycby9cEJiEbojeCFQCljlDx_jWtAvy5wWthvhkx6RlLP02YaZr3EtqMVtg7onyKpJEW1g/exec';
+
         const roomsGrid = document.getElementById('rooms-grid');
 
         async function fetchAndDisplayRooms() {
             roomsGrid.innerHTML = '<p id="loading">جاري تحديث حالة الغرف...</p>';
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(API_URL); // طلب GET عادي
                 const rooms = await response.json();
                 roomsGrid.innerHTML = '';
                 if (rooms.error) throw new Error(rooms.message);
@@ -72,6 +73,7 @@
                         endButton.onclick = () => endSession(room.RoomID);
                         actionsDiv.appendChild(endButton);
                     }
+                    
                     roomsGrid.appendChild(card);
                 });
 
@@ -90,17 +92,14 @@
             await sendAction('endSession', roomId);
         }
         
+        // --- الدالة العامة المُعدَّلة ---
         async function sendAction(actionName, roomId) {
              try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    redirect: 'follow',
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8',
-                    },
-                    body: JSON.stringify({ action: actionName, roomId: roomId })
-                });
+                // تعديل الرابط ليحتوي على الأمر
+                const urlWithParams = `${API_URL}?action=${actionName}&roomId=${roomId}`;
+                const response = await fetch(urlWithParams); // طلب GET مع الأوامر
                 const result = await response.json();
+
                 if (result.status === 'success') {
                     alert(result.message);
                     fetchAndDisplayRooms();
