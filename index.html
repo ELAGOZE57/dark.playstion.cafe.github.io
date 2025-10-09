@@ -39,22 +39,4 @@
                 if (rooms.error) { throw new Error(rooms.message); }
                 if (rooms.length === 0) { roomsGrid.innerHTML = '<p>لا توجد بيانات غرف حاليًا.</p>'; return; }
                 rooms.forEach(room => {
-                    const card = document.createElement('div');
-                    const statusClass = room.Status === 'Busy' ? 'Busy' : 'Available';
-                    card.className = `room-card ${statusClass}`;
-                    const name = document.createElement('h3');
-                    name.textContent = room.RoomName || 'غرفة غير مسماة';
-                    const statusText = document.createElement('p');
-                    statusText.textContent = `الحالة: ${statusClass === 'Available' ? 'متاحة' : 'مشغولة'}`;
-                    card.appendChild(name);
-                    card.appendChild(statusText);
-                    roomsGrid.appendChild(card);
-                });
-            } catch (error) {
-                roomsGrid.innerHTML = `<p style="color: #f44336;">حدث خطأ في تحميل بيانات الغرف. الرجاء المحاولة لاحقاً.</p>`;
-            }
-        }
-        fetchAndDisplayRooms();
-    </script>
-</body>
-</html>
+                    const card = document.createElement('
