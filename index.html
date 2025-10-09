@@ -95,13 +95,13 @@
                     const card = document.createElement('div');
                     const statusClass = room.Status === 'Busy' ? 'Busy' : 'Available';
                     
-                    card.className = room-card ${statusClass};
+                    card.className = `room-card ${statusClass}`;
                     
                     const name = document.createElement('h3');
                     name.textContent = room.RoomName || 'غرفة غير مسماة';
                     
                     const statusText = document.createElement('p');
-                    statusText.textContent = الحالة: ${statusClass === 'Available' ? 'متاحة' : 'مشغولة'};
+                    statusText.textContent = `الحالة: ${statusClass === 'Available' ? 'متاحة' : 'مشغولة'}`;
                     
                     card.appendChild(name);
                     card.appendChild(statusText);
@@ -110,7 +110,7 @@
                 });
 
             } catch (error) {
-                roomsGrid.innerHTML = <p style="color: #f44336;">حدث خطأ في تحميل بيانات الغرف. الرجاء المحاولة لاحقاً.</p>;
+                roomsGrid.innerHTML = `<p style="color: #f44336;">حدث خطأ في تحميل بيانات الغرف. الرجاء المحاولة لاحقاً.</p>`;
                 console.error('Error fetching rooms:', error);
             }
         }
