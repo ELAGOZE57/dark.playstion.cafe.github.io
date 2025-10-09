@@ -93,8 +93,25 @@
         }
         
         // --- الدالة العامة المُعدَّلة ---
+// دالة عامة مُحسَّنة لإرسال الأوامر وعرض أخطاء أفضل
         async function sendAction(actionName, roomId) {
              try {
+                const urlWithParams = `${API_URL}?action=${actionName}&roomId=${roomId}`;
+                const response = await fetch(urlWithParams);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert(result.message);
+                    fetchAndDisplayRooms();
+                } else {
+                    // إذا كان هناك رسالة خطأ من السيرفر، اعرضها
+                    throw new Error(result.message || JSON.stringify(result));
+                }
+            } catch (error) {
+                // اعرض الخطأ الكامل الذي يحدث في المتصفح
+                alert(`فشل الإجراء: ${error.toString()}`);
+            }
+        }             try {
                 // تعديل الرابط ليحتوي على الأمر
                 const urlWithParams = `${API_URL}?action=${actionName}&roomId=${roomId}`;
                 const response = await fetch(urlWithParams); // طلب GET مع الأوامر
