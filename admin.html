@@ -42,7 +42,7 @@
         async function fetchAndDisplayRooms() {
             roomsGrid.innerHTML = '<p id="loading">جاري تحديث حالة الغرف...</p>';
             try {
-                const response = await fetch(API_URL); // طلب GET عادي
+                const response = await fetch(API_URL);
                 const rooms = await response.json();
                 roomsGrid.innerHTML = '';
                 if (rooms.error) throw new Error(rooms.message);
@@ -92,8 +92,7 @@
             await sendAction('endSession', roomId);
         }
         
-        // --- الدالة العامة المُعدَّلة ---
-// دالة عامة مُحسَّنة لإرسال الأوامر وعرض أخطاء أفضل
+        // دالة عامة مُحسَّنة لإرسال الأوامر وعرض أخطاء أفضل
         async function sendAction(actionName, roomId) {
              try {
                 const urlWithParams = `${API_URL}?action=${actionName}&roomId=${roomId}`;
@@ -110,21 +109,6 @@
             } catch (error) {
                 // اعرض الخطأ الكامل الذي يحدث في المتصفح
                 alert(`فشل الإجراء: ${error.toString()}`);
-            }
-        }             try {
-                // تعديل الرابط ليحتوي على الأمر
-                const urlWithParams = `${API_URL}?action=${actionName}&roomId=${roomId}`;
-                const response = await fetch(urlWithParams); // طلب GET مع الأوامر
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    alert(result.message);
-                    fetchAndDisplayRooms();
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (error) {
-                alert(`فشل الإجراء: ${error.message}`);
             }
         }
 
