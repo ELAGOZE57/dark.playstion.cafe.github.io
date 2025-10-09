@@ -48,7 +48,99 @@
         const API_URL = 'https://script.google.com/macros/s/AKfycby9cEJiEbojeCFQCljlDx_jWtAvy5wWthvhkx6RlLP02YaZr3EtqMVtg7onyKpJEW1g/exec
 ';
 
-        // --- سيأتي كود الجافاسكربت الخاص بهذه الصفحة هنا ---
-    </script>
+const roomsGrid = document.getElementById('rooms-grid');
+        const loadingMessage = document.getElementById('loading');
+
+        // دالة لجلب البيانات وعرضها
+        async function fetchAndDisplayRooms() {
+            // إظهار رسالة التحميل في كل مرة يتم التحديث
+            roomsGrid.innerHTML = '<p id="loading">جاري تحديث حالة الغرف...</p>';
+            
+            try {
+                const response = await fetch(API_URL);
+                const rooms = await response.json();
+                roomsGrid.innerHTML = ''; // إفراغ الشبكة
+
+                if (rooms.error) throw new Error(rooms.message);
+                if (rooms.length === 0) {
+                    roomsGrid.innerHTML = '<p>لا توجد بيانات غرف حاليًا.</p>';
+                    return;
+                }
+
+                rooms.forEach(room => {
+                    const card = document.createElement('div');
+                    const statusClass = room.Status === 'Busy' ? 'Busy' : 'Available';
+                    card.className = `room-card ${statusClass}`;
+                    
+                    const name = document.createElement('h3');
+                    name.textContent = room.RoomName || 'غرفة غير مسماة';
+                    
+                    const statusText = document.createElement('p');
+                    statusText.textContent = `الحالة: ${statusClass === 'Available' ? 'متاحة' : 'مشغولة'}`;
+                    
+                    card.appendChild(name);
+                    card.appendChild(statusText);
+
+                    // إضافة قسم الأزرار
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'actions';
+
+                    if (statusClass === 'Available') {
+                        const startButton = document.createElement('button');
+                        startButton.textContent = 'ابدأ';
+                        startButton.className = 'start-btn';
+                        // عند الضغط، يتم استدعاء دالة بدء الجلسة مع إرسال كود الغرفة
+                        startButton.onclick = () => startSession(room.RoomID);
+                        actionsDiv.appendChild(startButton);
+                    } else {
+                        // لاحقًا سنضيف هنا زر "إنهاء الجلسة" و"إضافة طلبات"
+                    }
+                    
+                    card.appendChild(actionsDiv);
+                    roomsGrid.appendChild(card);
+                });
+
+            } catch (error) {
+                roomsGrid.innerHTML = `<p style="color: #f44336;">حدث خطأ في تحميل البيانات.</p>`;
+                console.error('Error fetching rooms:', error);
+            }
+        }
+
+        // دالة جديدة لإرسال أمر "بدء الجلسة"
+        async function startSession(roomId) {
+            // رسالة تأكيد قبل البدء
+            if (!confirm(`هل أنت متأكد أنك تريد بدء جلسة للغرفة ${roomId}؟`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify({
+                        action: 'startSession',
+                        roomId: roomId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert(result.message); // إظهار رسالة نجاح
+                    fetchAndDisplayRooms(); // إعادة تحميل الغرف لإظهار التغيير
+                } else {
+                    throw new Error(result.message);
+                }
+
+            } catch (error) {
+                alert(`فشل في بدء الجلسة: ${error.message}`);
+                console.error('Error starting session:', error);
+            }
+        }
+
+        // تشغيل الدالة عند تحميل الصفحة
+        fetchAndDisplayRooms();    </script>
 </body>
 </html>
