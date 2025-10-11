@@ -5,86 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dark Cafe — لوحة الكاشير</title>
 
-  <!-- استيراد ملف إعدادات API -->
+  <!-- ملف إعداد رابط الويب آب -->
   <script src="./config.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: #121212;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-    }
-    .container {
-      width: 100%;
-      max-width: 1100px;
-    }
-    h1 {
-      text-align: center;
-      color: #bb86fc;
-      margin: 0 0 10px;
-    }
-    .hint {
-      color: #aaa;
-      text-align: center;
-      font-size: .9rem;
-    }
-    #rooms-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-      margin-top: 20px;
-    }
-    .room-card {
-      border: 1px solid #333;
-      border-radius: 10px;
-      padding: 14px;
-      text-align: center;
-      transition: transform .15s ease, background-color .3s;
-    }
-    .room-card:hover { transform: translateY(-2px); }
-    .room-card.Available { background: #004d40; border-color: #00796b; }
-    .room-card.Busy { background: #5a1a1a; border-color: #f44336; }
-    .room-card h3 { margin: 0 0 8px; }
-    .room-card p { margin: 0 0 10px; color: #ddd; font-size: .9rem; }
-    .actions button {
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      margin: 5px;
-      font-weight: 700;
-    }
-    .start-btn { background: #03dac6; color: #000; }
-    .end-btn { background: #cf6679; color: #000; }
-    #loading { text-align: center; padding: 24px; }
+    *{box-sizing:border-box}
+    body{font-family:'Tajawal',sans-serif;background:#121212;color:#fff;margin:0;padding:20px;display:flex;justify-content:center}
+    .container{width:100%;max-width:1100px}
+    h1{text-align:center;color:#bb86fc;margin:0 0 10px}
+    .hint{color:#aaa;text-align:center;font-size:.9rem}
+    #rooms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:20px}
+    .room-card{border:1px solid #333;border-radius:10px;padding:14px;text-align:center;transition:transform .15s ease,background-color .3s}
+    .room-card:hover{transform:translateY(-2px)}
+    .room-card.Available{background:#004d40;border-color:#00796b}
+    .room-card.Busy{background:#5a1a1a;border-color:#f44336}
+    .room-card h3{margin:0 0 8px}
+    .room-card p{margin:0 0 10px;color:#ddd;font-size:.9rem}
+    .actions button{border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:14px;margin:5px;font-weight:700}
+    .start-btn{background:#03dac6;color:#000}
+    .end-btn{background:#cf6679;color:#000}
+    #loading{text-align:center;padding:24px}
   </style>
 </head>
-
 <body>
   <div class="container">
     <h1>لوحة تحكم الكاشير</h1>
-    <div class="hint">
-      تأكد أن إعدادات الـAPI في <code>config.js</code> صحيحة.<br>
-      Web App: <b>Execute as: Me</b> + <b>Access: Anyone</b>
-    </div>
+    <div class="hint">تأكد من ضبط <code>config.js</code> | Web App: <b>Execute as: Me</b> · <b>Access: Anyone</b></div>
     <div id="rooms-grid"><p id="loading">جاري تحميل حالة الغرف…</p></div>
   </div>
 
-  <!-- سكربت المنطق -->
   <script>
     if (!window.API_URL) {
       alert('⚠️ لم يتم ضبط API_URL في config.js');
     } else {
-      console.log('✅ API_URL متصل:', API_URL);
+      console.log('API_URL:', API_URL);
     }
 
     const roomsGrid = document.getElementById('rooms-grid');
@@ -93,10 +50,26 @@
       roomsGrid.innerHTML = '<p id="loading">جاري تحديث حالة الغرف…</p>';
       try {
         const res = await fetch(API_URL, { method: 'GET' });
+
+        // لو الاستجابة ليست JSON اعرض النص للتشخيص
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) {
+          const text = await res.text();
+          roomsGrid.innerHTML = `
+            <div style="color:#f44336;white-space:pre-wrap;direction:ltr;background:#1e1e1e;padding:12px;border-radius:8px;">
+              ❌ API لم يرجّع JSON (غالبًا صلاحيات النشر).<br><br>${text.slice(0, 1200)}
+            </div>`;
+          return;
+        }
+
         const rooms = await res.json();
 
         roomsGrid.innerHTML = '';
-        if (!Array.isArray(rooms)) throw new Error('استجابة غير متوقعة من API');
+        if (!Array.isArray(rooms)) {
+          roomsGrid.innerHTML = '<p style="color:#f44336;text-align:center">استجابة غير متوقعة من API.</p>';
+          console.error('Unexpected:', rooms);
+          return;
+        }
         if (rooms.length === 0) {
           roomsGrid.innerHTML = '<p style="text-align:center">لا توجد غرف بعد.</p>';
           return;
@@ -111,22 +84,24 @@
             <h3>${room.RoomName || 'غرفة'}</h3>
             <p>الكود: ${room.RoomID || '-'}</p>
             <p>الحالة: ${busy ? 'مشغولة' : 'متاحة'}</p>
-            <div class="actions"></div>
-          `;
+            <div class="actions"></div>`;
           const actionsDiv = card.querySelector('.actions');
+
+          // أزرار الأفعال
           if (!busy) {
             const btn = document.createElement('button');
             btn.className = 'start-btn';
             btn.textContent = 'ابدأ';
-            btn.onclick = () => startSession(room.RoomID);
+            btn.onclick = function(){ startSession(room.RoomID); }; // لا await هنا
             actionsDiv.appendChild(btn);
           } else {
             const btn = document.createElement('button');
             btn.className = 'end-btn';
             btn.textContent = 'إنهاء';
-            btn.onclick = () => endSession(room.RoomID);
+            btn.onclick = function(){ endSession(room.RoomID); }; // لا await هنا
             actionsDiv.appendChild(btn);
           }
+
           roomsGrid.appendChild(card);
         });
       } catch (e) {
@@ -135,6 +110,7 @@
       }
     }
 
+    // دوال الأفعال (async بداخلها await فقط)
     async function startSession(roomId) {
       if (!roomId) return alert('RoomID غير معروف.');
       if (!confirm(`بدء جلسة للغرفة ${roomId}؟`)) return;
@@ -148,29 +124,13 @@
     }
 
     async function sendAction(actionName, roomId) {
-  try {
-    const url = `${API_URL}?action=${encodeURIComponent(actionName)}&roomId=${encodeURIComponent(roomId)}`;
-    const res = await fetch(url, { method: 'GET' });
-    const result = await res.json();
-    if (result.status === 'success') {
-      alert(result.message);
-      fetchAndDisplayRooms();
-    } else {
-      throw new Error(result.message || JSON.stringify(result));
-    }
-  } catch (err) {
-    alert('فشل الإجراء: ' + err.toString());
-    console.error(err);
-  }
-}
-
       try {
         const url = `${API_URL}?action=${encodeURIComponent(actionName)}&roomId=${encodeURIComponent(roomId)}`;
         const res = await fetch(url, { method: 'GET' });
         const result = await res.json();
         if (result.status === 'success') {
           alert(result.message);
-          fetchAndDisplayRooms();
+          fetchAndDisplayRooms(); // من غير await
         } else {
           throw new Error(result.message || JSON.stringify(result));
         }
@@ -180,6 +140,7 @@
       }
     }
 
+    // استدعاءات على مستوى الصفحة بدون await
     fetchAndDisplayRooms();
     setInterval(fetchAndDisplayRooms, 60000);
   </script>
