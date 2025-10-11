@@ -148,6 +148,22 @@
     }
 
     async function sendAction(actionName, roomId) {
+  try {
+    const url = `${API_URL}?action=${encodeURIComponent(actionName)}&roomId=${encodeURIComponent(roomId)}`;
+    const res = await fetch(url, { method: 'GET' });
+    const result = await res.json();
+    if (result.status === 'success') {
+      alert(result.message);
+      fetchAndDisplayRooms();
+    } else {
+      throw new Error(result.message || JSON.stringify(result));
+    }
+  } catch (err) {
+    alert('فشل الإجراء: ' + err.toString());
+    console.error(err);
+  }
+}
+
       try {
         const url = `${API_URL}?action=${encodeURIComponent(actionName)}&roomId=${encodeURIComponent(roomId)}`;
         const res = await fetch(url, { method: 'GET' });
