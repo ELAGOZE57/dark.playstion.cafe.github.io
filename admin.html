@@ -2,138 +2,207 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dark Cafe – لوحة التحكم</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dark Cafe — لوحة الكاشير</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet"/>
   <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: #121212;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      text-align: center;
-      color: #bb86fc;
-    }
-    .hint {
-      color: #aaa;
-      text-align: center;
-      font-size: .9rem;
-      margin-bottom: 15px;
-    }
-    #rooms {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-      width: 100%;
-      max-width: 1000px;
-      margin-top: 20px;
-    }
-    .room {
-      background: #1e1e1e;
-      border-radius: 10px;
-      padding: 16px;
-      text-align: center;
-      transition: 0.3s;
-    }
-    .room.available { border: 2px solid #03dac6; }
-    .room.occupied { border: 2px solid #cf6679; }
-    .room:hover { transform: scale(1.03); }
-    button {
-      background: #03dac6;
-      border: none;
-      color: #000;
-      padding: 8px 12px;
-      margin-top: 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button.end { background: #cf6679; color: #fff; }
+    *{box-sizing:border-box}
+    body{font-family:'Tajawal',sans-serif;background:#121212;color:#fff;margin:0;padding:20px;display:flex;flex-direction:column;align-items:center;min-height:100vh}
+    h1{text-align:center;color:#bb86fc;margin:0 0 8px}
+    .hint{color:#aaa;text-align:center;font-size:.9rem;margin-bottom:12px}
+    #rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;width:100%;max-width:1100px;margin-top:10px}
+    .room{background:#1e1e1e;border-radius:12px;padding:14px;text-align:center;transition:transform .15s ease,box-shadow .15s ease;box-shadow:0 0 0 1px #2a2a2a inset}
+    .room.available{box-shadow:0 0 0 2px #03dac6 inset}
+    .room.occupied{box-shadow:0 0 0 2px #cf6679 inset}
+    .room:hover{transform:translateY(-2px)}
+    .room h3{margin:0 0 6px;font-size:1.05rem}
+    .meta{color:#cfcfcf;font-size:.9rem;margin:0 0 8px}
+    .timer{font-weight:700;margin:6px 0 2px}
+    .cost{opacity:.9;font-size:.9rem}
+    button{background:#03dac6;border:none;color:#000;padding:8px 12px;margin-top:10px;border-radius:8px;cursor:pointer;font-weight:700}
+    button.end{background:#cf6679;color:#fff}
+    .message{color:#ff5252;text-align:center;margin-top:20px}
+    .loading{color:#bbb;text-align:center;margin-top:20px}
   </style>
 </head>
 <body>
   <h1>لوحة تحكم الكاشير</h1>
-  <p class="hint">
-    تأكد من إعدادات API في ملف config.js | Web App: Execute as: Me + Access: Anyone
-  </p>
-  <div id="rooms">جاري تحميل حالة الغرف...</div>
+  <p class="hint">تأكد من Web App: Execute as: <b>Me</b> · Access: <b>Anyone</b></p>
 
-  <!-- ✅ هنا تعديل سطر استيراد config -->
-<script src="./config.js?v=5"></script>
+  <div id="rooms" class="loading">جاري تحميل حالة الغرف…</div>
+
+  <!-- استيراد إعدادات الـAPI -->
+  <script src="./config.js?v=11"></script>
 
   <script>
-    async function fetchRooms() {
-      if (typeof API_URL === 'undefined' || !API_URL) {
-        alert('⚠️ لم يتم ضبط API_URL في config.js');
-        return;
+    let SETTINGS = { HourPrice_PS_Solo:0, HourPrice_PS_Multi:0, HourPrice_Billiards:0, HourPrice_PingPong:0, Currency:'EGP' };
+    const activeTimers = new Map();
+
+    function formatDuration(ms) {
+      const t = Math.max(0, Math.floor(ms/1000));
+      const h = String(Math.floor(t/3600)).padStart(2,'0');
+      const m = String(Math.floor((t%3600)/60)).padStart(2,'0');
+      const s = String(t%60).padStart(2,'0');
+      return `${h}:${m}:${s}`;
+    }
+
+    function hourlyFor(room) {
+      const type = (room.Type||'').toLowerCase();
+      if (type === 'playstation') {
+        return (room.Mode === 'Multi') ? (SETTINGS.HourPrice_PS_Multi||0) : (SETTINGS.HourPrice_PS_Solo||0);
+      } else if (type === 'billiards') {
+        return SETTINGS.HourPrice_Billiards||0;
+      } else if (type.replace(/\s+/g,'') === 'pingpong') {
+        return SETTINGS.HourPrice_PingPong||0;
       }
+      return 0;
+    }
+
+    async function fetchSettings() {
+      if (!window.API_URL) throw new Error('API_URL غير مضبوط');
+      const res = await fetch(`${API_URL}?action=getSettings`);
+      const data = await res.json();
+      if (data.status !== 'success') throw new Error(data.message||'فشل جلب الإعدادات');
+      SETTINGS = data.settings || SETTINGS;
+    }
+
+    async function fetchRooms() {
+      const container = document.getElementById('rooms');
+
+      // نظف مؤقتات قديمة
+      for (const id of activeTimers.keys()) { clearInterval(activeTimers.get(id)); activeTimers.delete(id); }
 
       try {
         const res = await fetch(API_URL);
-        const data = await res.json();
-
-        if (!Array.isArray(data)) {
-          document.getElementById('rooms').innerHTML =
-            '<p style="color:red;">استجابة غير متوقعة من API.</p>';
-          console.error('Unexpected:', data);
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) {
+          container.className = 'message';
+          container.textContent = '⚠️ الاستجابة ليست JSON. راجع نشر الويب آب.';
           return;
         }
-
-        displayRooms(data);
-      } catch (err) {
-        document.getElementById('rooms').innerHTML =
-          '<p style="color:red;">حدث خطأ أثناء تحميل البيانات.</p>';
-        console.error(err);
+        const rooms = await res.json();
+        if (!Array.isArray(rooms)) {
+          container.className = 'message';
+          container.textContent = '⚠️ استجابة غير متوقعة من API.';
+          return;
+        }
+        renderRooms(rooms);
+      } catch (e) {
+        container.className = 'message';
+        container.textContent = '⚠️ خطأ أثناء تحميل البيانات.';
+        console.error(e);
       }
     }
 
-    function displayRooms(rooms) {
+    function renderRooms(rooms) {
       const container = document.getElementById('rooms');
+      container.className = '';
       container.innerHTML = '';
 
       rooms.forEach(room => {
-        const div = document.createElement('div');
-        div.className = 'room ' + (room.Status === 'Available' ? 'available' : 'occupied');
-        div.innerHTML = `
-          <h3>${room.RoomName}</h3>
-          <p>${room.Type}</p>
-          <p>الحالة: ${room.Status}</p>
-          ${
-            room.Status === 'Available'
-              ? `<button onclick="sendAction('startSession','${room.RoomID}')">ابدأ</button>`
-              : `<button class="end" onclick="sendAction('endSession','${room.RoomID}')">إنهاء</button>`
+        const isBusy = (room.Status === 'Busy' || room.Status === 'مشغولة');
+        const card = document.createElement('div');
+        card.className = 'room ' + (isBusy ? 'occupied' : 'available');
+
+        const title = document.createElement('h3');
+        title.textContent = room.RoomName || 'غرفة';
+
+        const meta1 = document.createElement('p');
+        meta1.className = 'meta';
+        meta1.textContent = `${room.Type || ''} • الكود: ${room.RoomID || '-'}`;
+
+        const meta2 = document.createElement('p');
+        meta2.className = 'meta';
+        meta2.textContent = `الحالة: ${isBusy ? 'مشغولة' : 'متاحة'}${isBusy && room.Mode ? ' • الوضع: '+room.Mode : ''}`;
+
+        card.append(title, meta1, meta2);
+
+        if (isBusy && room.StartTime) {
+          const start = new Date(room.StartTime);
+          if (!isNaN(start.getTime())) {
+            const timerEl = document.createElement('div');
+            timerEl.className = 'timer';
+            timerEl.textContent = 'المدة: …';
+            const costEl = document.createElement('div');
+            costEl.className = 'cost';
+            costEl.textContent = `التكلفة الآن: … ${SETTINGS.Currency}`;
+            card.append(timerEl, costEl);
+
+            const intId = setInterval(() => {
+              const diff = new Date() - start;
+              timerEl.textContent = 'المدة: ' + formatDuration(diff);
+              const hours = diff / (1000*60*60);
+              const hourly = hourlyFor(room);
+              const cost = hourly * hours;
+              costEl.textContent = `التكلفة الآن: ${cost.toFixed(2)} ${SETTINGS.Currency}`;
+            }, 1000);
+
+            // تحديث فوري أول مرة
+            (function(){
+              const diff = new Date() - start;
+              timerEl.textContent = 'المدة: ' + formatDuration(diff);
+              const hours = diff / (1000*60*60);
+              const cost = (hourlyFor(room)) * hours;
+              costEl.textContent = `التكلفة الآن: ${cost.toFixed(2)} ${SETTINGS.Currency}`;
+            })();
+
+            activeTimers.set(room.RoomID, intId);
           }
-        `;
-        container.appendChild(div);
+        }
+
+        if (!isBusy) {
+          const btnSolo = document.createElement('button');
+          btnSolo.textContent = 'ابدأ فردي';
+          btnSolo.onclick = () => doAction('startSession', room.RoomID, 'Solo');
+
+          const btnMulti = document.createElement('button');
+          btnMulti.textContent = 'ابدأ مالتي';
+          btnMulti.style.marginInlineStart = '8px';
+          btnMulti.onclick = () => doAction('startSession', room.RoomID, 'Multi');
+
+          card.append(btnSolo, btnMulti);
+        } else {
+          const btnEnd = document.createElement('button');
+          btnEnd.className = 'end';
+          btnEnd.textContent = 'إنهاء';
+          btnEnd.onclick = () => doAction('endSession', room.RoomID);
+          card.append(btnEnd);
+        }
+
+        container.appendChild(card);
       });
     }
 
-    async function sendAction(actionName, roomId) {
+    async function doAction(action, roomId, mode) {
+      const container = document.getElementById('rooms');
       try {
-        const url = `${API_URL}?action=${encodeURIComponent(actionName)}&roomId=${encodeURIComponent(roomId)}`;
+        let url = `${API_URL}?action=${encodeURIComponent(action)}&roomId=${encodeURIComponent(roomId)}`;
+        if (mode) url += `&mode=${encodeURIComponent(mode)}`;
         const res = await fetch(url, { method: 'GET' });
-        const result = await res.json();
-
-        if (result.status === 'success') {
-          alert(result.message);
+        const out = await res.json();
+        if (out.status === 'success') {
           fetchRooms();
         } else {
-          alert('⚠️ خطأ: ' + result.message);
+          container.className = 'message';
+          container.textContent = '⚠️ ' + (out.message || 'فشل الإجراء.');
         }
-      } catch (err) {
-        alert('حدث خطأ أثناء الاتصال بالسيرفر');
-        console.error(err);
+      } catch (e) {
+        container.className = 'message';
+        container.textContent = '⚠️ حدث خطأ أثناء الاتصال بالسيرفر.';
+        console.error(e);
       }
     }
 
-    fetchRooms();
+    (async function init(){
+      const container = document.getElementById('rooms');
+      container.className = 'loading';
+      container.textContent = 'جاري تحميل حالة الغرف…';
+
+      try { await fetchSettings(); } catch(e){ console.warn('Failed to load settings:', e); }
+      await fetchRooms();
+      setInterval(fetchRooms, 60000);
+    })();
   </script>
 </body>
 </html>
