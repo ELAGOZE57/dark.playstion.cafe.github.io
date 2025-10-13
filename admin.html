@@ -204,5 +204,56 @@
       setInterval(fetchRooms, 60000);
     })();
   </script>
+<!-- إيصال الطباعة -->
+<div id="receipt" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:9999;direction:rtl">
+  <div id="receiptCard" style="background:#fff;color:#000;border-radius:12px;min-width:320px;max-width:420px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)">
+    <div style="text-align:center;margin-bottom:10px">
+      <div style="font-weight:700;font-size:18px">Dark Cafe</div>
+      <div style="font-size:12px;color:#444">POS Receipt</div>
+    </div>
+    <div id="receiptBody" style="font-size:14px;line-height:1.6"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button onclick="window.print()" style="background:#121212;color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer">طباعة</button>
+      <button onclick="closeReceipt()" style="background:#e0e0e0;border:none;border-radius:8px;padding:8px 12px;cursor:pointer">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openReceipt(data){
+  const el = document.getElementById('receipt');
+  const body = document.getElementById('receiptBody');
+
+  const hours = (data.minutes||0) / 60;
+  const total = (typeof data.total === 'number')
+    ? data.total
+    : Number((hours * (data.hourly||0)).toFixed(2));
+
+  body.innerHTML = `
+    <div><b>التاريخ/الوقت:</b> ${new Date(data.when).toLocaleString()}</div>
+    <div><b>الغرفة:</b> ${data.roomName} (${data.roomId})</div>
+    <div><b>النوع:</b> ${data.type} • <b>الوضع:</b> ${data.mode}</div>
+    <hr style="border:none;border-top:1px solid #ddd;margin:8px 0">
+    <div><b>المدة:</b> ${Math.round(data.minutes||0)} دقيقة</div>
+    <div><b>السعر/الساعة:</b> ${Number(data.hourly||0).toFixed(2)} ${data.currency}</div>
+    <div><b>الإجمالي:</b> ${total.toFixed(2)} ${data.currency}</div>
+    ${data.message ? `<hr style="border:none;border-top:1px solid #eee;margin:8px 0"><div style="color:#444">${data.message}</div>` : ''}
+  `;
+
+  el.style.display = 'flex';
+}
+
+function closeReceipt(){
+  document.getElementById('receipt').style.display = 'none';
+}
+</script>
+
+<style>
+@media print {
+  body>*:not(#receipt) { display:none !important; }
+  #receipt { display:flex !important; background:transparent !important; }
+  #receiptCard { box-shadow:none !important; }
+}
+</style>
 </body>
 </html>
